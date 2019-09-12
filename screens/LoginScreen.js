@@ -33,6 +33,7 @@ export default class LoginScreen extends Component {
         .signInWithEmailAndPassword(email, password)
         .then(() => this.props.navigation.navigate('Welcome'))
         .catch(error => this.setState({errorMessage: error.message}));
+      console.log(this.state.errorMessage);
       // Alert.alert('Error Message', this.state.errorMessage);
     }
   };
