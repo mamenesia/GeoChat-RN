@@ -17,12 +17,14 @@ import AuthLoadingScreen from './screens/AuthLoadingScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
+import FriendListScreen from './screens/FriendListScreen';
 
 const AppStack = createStackNavigator(
   {
     Home: HomeScreen,
     Chat: ChatScreen,
     Profile: ProfileScreen,
+    FriendList: FriendListScreen,
   },
   {initialRouteName: 'Home'},
 );

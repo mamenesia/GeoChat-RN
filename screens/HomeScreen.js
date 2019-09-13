@@ -1,7 +1,17 @@
 import React, {Component} from 'react';
-import {View, Text, TouchableOpacity, Dimensions} from 'react-native';
-import MapView from 'react-native-maps';
+import {
+  View,
+  Text,
+  Image,
+  ToastAndroid,
+  Platform,
+  PermissionsAndroid,
+  Dimensions,
+} from 'react-native';
+import MapView, {Marker} from 'react-native-maps';
+import Geolocation from 'react-native-geolocation-service';
 import styles from '../constant/styles';
+import {Database} from '../constant/config';
 
 const {width, height} = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -12,20 +22,159 @@ export default class HomeScreen extends Component {
   static navigationOptions = {
     header: null,
   };
+
+  state = {
+    initial: 'state',
+    mapRegion: null,
+    latitude: 0,
+    longitude: 0,
+    userList: [],
+  };
+
+  componentDidMount = async () => {
+    await this.getUser();
+    await this.getLocation();
+  };
+
+  getUser = async () => {
+    Database.ref('/user').on('child_added', result => {
+      let data = result.val();
+      if (data !== null) {
+        // console.log(data);
+        // let users = Object.values(data);
+        // console.log(users);
+        this.setState(prevData => {
+          return {userList: [...prevData.userList, data]};
+        });
+      }
+    });
+  };
+
+  hasLocationPermission = async () => {
+    if (
+      Platform.OS === 'ios' ||
+      (Platform.OS === 'android' && Platform.Version < 23)
+    ) {
+      return true;
+    }
+    const hasPermission = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+    if (hasPermission) {
+      return true;
+    }
+    const status = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+    if (status === PermissionsAndroid.RESULTS.GRANTED) {
+      return true;
+    }
+    if (status === PermissionsAndroid.RESULTS.DENIED) {
+      ToastAndroid.show(
+        'Location Permission Denied By User.',
+        ToastAndroid.LONG,
+      );
+    } else if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      ToastAndroid.show(
+        'Location Permission Revoked By User.',
+        ToastAndroid.LONG,
+      );
+    }
+    return false;
+  };
+
+  getLocation = async () => {
+    const hasLocationPermission = await this.hasLocationPermission();
+
+    if (!hasLocationPermission) {
+      return;
+    }
+
+    this.setState({loading: true}, () => {
+      Geolocation.getCurrentPosition(
+        position => {
+          let region = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            latitudeDelta: 0.00922,
+            longitudeDelta: 0.00421 * 1.5,
+          };
+          this.setState({
+            mapRegion: region,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            loading: false,
+          });
+          // console.warn(position);
+        },
+        error => {
+          this.setState({errorMessage: error});
+          // console.warn(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 10000,
+          distanceFilter: 50,
+          forceRequestLocation: true,
+        },
+      );
+    });
+  };
+
   render() {
+    console.warn(this.state.userList);
     return (
       <View style={[styles.container, {justifyContent: 'flex-start'}]}>
         <MapView
-          style={{width: '100%', height: '80%'}}
+          style={{width: '100%', height: '90%'}}
+          showsMyLocationButton={true}
+          showsIndoorLevelPicker={true}
+          showsUserLocation={true}
+          zoomControlEnabled={true}
+          showsCompass={true}
+          showsTraffic={true}
+          region={this.state.mapRegion}
           initialRegion={{
             latitude: -7.755322,
             longitude: 110.381174,
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA,
-          }}
-        />
-
-        <Text onPress={() => this.props.navigation.navigate('Chat')}>Chat</Text>
+          }}>
+          {this.state.userList.map(item => {
+            // console.warn(item);
+            return (
+              <Marker
+                key={item.id}
+                draggable
+                coordinate={{
+                  latitude: item.latitude || 0,
+                  longitude: item.longitude || 0,
+                }}
+                onPress={() => {
+                  this.props.navigation.navigate('Profile', {
+                    name: item.name,
+                    email: item.email,
+                    status: item.status,
+                    photo: item.photo,
+                    id: item.id,
+                  });
+                }}>
+                <View>
+                  <Image
+                    source={{uri: item.photo}}
+                    style={{width: 40, height: 40, borderRadius: 50}}
+                  />
+                  <Text>{item.name}</Text>
+                </View>
+              </Marker>
+            );
+          })}
+        </MapView>
+        <Text onPress={() => this.getLocation()}>Current Location</Text>
+        <Text onPress={() => this.props.navigation.navigate('FriendList')}>
+          FriendList
+        </Text>
         <Text onPress={() => this.props.navigation.navigate('Profile')}>
           Profile
         </Text>

@@ -3,11 +3,16 @@ import {
   View,
   Text,
   Image,
+  Platform,
+  PermissionsAndroid,
   TextInput,
   TouchableOpacity,
-  Alert,
+  ToastAndroid,
+  AsyncStorage,
 } from 'react-native';
 import firebase from 'firebase';
+import Geolocation from 'react-native-geolocation-service';
+import {Database, Auth} from '../constant/config';
 import styles from '../constant/styles';
 
 export default class LoginScreen extends Component {
@@ -18,22 +23,128 @@ export default class LoginScreen extends Component {
     email: '',
     password: '',
   };
+
+  componentDidMount = async () => {
+    await this.getLocation();
+  };
+
+  hasLocationPermission = async () => {
+    if (
+      Platform.OS === 'ios' ||
+      (Platform.OS === 'android' && Platform.Version < 23)
+    ) {
+      return true;
+    }
+    const hasPermission = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+    if (hasPermission) {
+      return true;
+    }
+    const status = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+    if (status === PermissionsAndroid.RESULTS.GRANTED) {
+      return true;
+    }
+    if (status === PermissionsAndroid.RESULTS.DENIED) {
+      ToastAndroid.show(
+        'Location Permission Denied By User.',
+        ToastAndroid.LONG,
+      );
+    } else if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      ToastAndroid.show(
+        'Location Permission Revoked By User.',
+        ToastAndroid.LONG,
+      );
+    }
+    return false;
+  };
+
+  getLocation = async () => {
+    const hasLocationPermission = await this.hasLocationPermission();
+
+    if (!hasLocationPermission) {
+      return;
+    }
+
+    this.setState({loading: true}, () => {
+      Geolocation.getCurrentPosition(
+        position => {
+          this.setState({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            loading: false,
+          });
+          console.warn(position);
+        },
+        error => {
+          this.setState({errorMessage: error});
+          console.warn(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 10000,
+          distanceFilter: 50,
+          forceRequestLocation: true,
+        },
+      );
+    });
+  };
+
   handleChange = key => val => {
     this.setState({[key]: val});
   };
-  submitForm = () => {
+  submitForm = async () => {
     const {email, password} = this.state;
     if (email.length < 6) {
-      Alert.alert('Error', 'Please input a valid email address');
+      ToastAndroid.show(
+        'Please input a valid email address',
+        ToastAndroid.LONG,
+      );
     } else if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      ToastAndroid.show(
+        'Password must be at least 6 characters',
+        ToastAndroid.LONG,
+      );
     } else {
+      Database.ref('/user')
+        .orderByChild('email')
+        .equalTo(email)
+        .once('value', result => {
+          let data = result.val();
+          if (data !== null) {
+            let user = Object.values(data);
+            console.warn(user);
+            AsyncStorage.setItem('user', user[0].email);
+            AsyncStorage.setItem('user', user[0].name);
+            AsyncStorage.setItem('user', user[0].photo);
+          }
+        });
       firebase
         .auth()
         .signInWithEmailAndPassword(email, password)
-        .then(() => this.props.navigation.navigate('Welcome'))
-        .catch(error => this.setState({errorMessage: error.message}));
-      console.log(this.state.errorMessage);
+        .then(response => {
+          console.warn(response);
+          Database.ref('/user/' + response.user.uid).update({
+            status: 'Online',
+            latitude: this.state.latitude,
+            longitude: this.state.longitude,
+          });
+          AsyncStorage.setItem('userid', response.user.uid);
+          ToastAndroid.show('Login success', ToastAndroid.LONG);
+          setInterval(() => this.props.navigation.navigate('Welcome'), 2000);
+        })
+        .catch(error => {
+          console.warn(error);
+          this.setState({
+            errorMessage: error.message,
+            email: '',
+            password: '',
+          });
+          ToastAndroid.show(this.state.errorMessage, ToastAndroid.LONG);
+        });
       // Alert.alert('Error Message', this.state.errorMessage);
     }
   };

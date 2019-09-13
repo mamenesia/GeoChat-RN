@@ -123,7 +123,7 @@ export default class ProfileScreen extends Component {
     firebase
       .auth()
       .signOut()
-      .then(() => this.props.navigation.navigate('Welcome'))
+      .then(() => this.props.navigation.navigate('AuthLogin'))
       .catch(error => this.setState({errorMessage: error.message}));
     // Alert.alert('Error Message', this.state.errorMessage);
   };
