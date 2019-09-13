@@ -4,41 +4,30 @@ import {
   StatusBar,
   FlatList,
   ActivityIndicator,
-  Alert,
-  Text,
-  AsyncStorage,
   StyleSheet,
+  SafeAreaView,
+  Text,
+  TouchableOpacity,
   Image,
+  AsyncStorage,
 } from 'react-native';
-import {
-  Container,
-  Content,
-  Body,
-  ListItem,
-  Left,
-  Thumbnail,
-  Header,
-  Title,
-} from 'native-base';
-import {Database, Auth} from '../constant/config';
+import {Database} from '../constant/config';
 
 export default class FriendListScreen extends Component {
   static navigationOptions = {
-    header: null,
+    title: 'Friend List',
   };
   state = {
     userList: [],
     refreshing: false,
-    uid: null,
+    uid: '',
   };
   componentDidMount = async () => {
     const uid = await AsyncStorage.getItem('userid');
-    this.setState({uid, refreshing: true});
-    Database.ref('/user').on('child_added', data => {
-      // console.warn(data);
+    this.setState({uid: uid, refreshing: true});
+    await Database.ref('/user').on('child_added', data => {
       let person = data.val();
-      person.id = data.key;
-      if (person.id != this.state.uid) {
+      if (person.id != uid) {
         this.setState(prevData => {
           return {userList: [...prevData.userList, person]};
         });
@@ -47,60 +36,104 @@ export default class FriendListScreen extends Component {
     });
   };
 
-  _renderItem = ({item}) => {
-    console.warn(item);
-    <ListItem
-      avatar
-      onPress={() =>
-        this.props.navigation.navigate('Chat', {
-          id: item.id,
-          photo: item.photo,
-          name: item.name,
-          status: item.status,
-          lattitude: item.lattitude,
-          longitude: item.longitude,
-        })
-      }>
-      <Left>
-        <Thumbnail source={{uri: item.photo}} />
-      </Left>
-      <Body style={{marginLeft: 7}}>
-        <Text numberOfLines={1} style={{fontWeight: 'bold'}}>
-          {item.name}
-        </Text>
-        <Text note numberOfLines={1}>
-          {item.status}
-        </Text>
-      </Body>
-    </ListItem>;
+  renderItem = ({item}) => {
+    return (
+      <TouchableOpacity
+        onPress={() => this.props.navigation.navigate('Chat', {item})}
+        onLongPress={() =>
+          this.props.navigation.navigate('FriendProfile', {item})
+        }>
+        <View style={styles.row}>
+          <Image source={{uri: item.photo}} style={styles.pic} />
+          <View>
+            <View style={styles.nameContainer}>
+              <Text
+                style={styles.nameTxt}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {item.name}
+              </Text>
+              {item.status == 'Online' ? (
+                <Text style={styles.email}>{item.status}</Text>
+              ) : (
+                <Text style={styles.status}>{item.status}</Text>
+              )}
+            </View>
+            <View style={styles.msgContainer}>
+              <Text style={styles.status}>{item.email}</Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
   };
   render() {
     return (
-      <Container>
-        <Header style={{backgroundColor: 'black'}}>
-          <Body>
-            <Title style={{left: 20}}>GeoChat</Title>
-          </Body>
-        </Header>
-        <Content>
-          <StatusBar backgroundColor="black" barStyle="light-content" />
-          {this.state.refreshing == true ? (
-            <ActivityIndicator
-              size="large"
-              color="#ccc"
-              style={{marginTop: 100}}
-            />
-          ) : (
-            <View style={{flex: 1}}>
-              <FlatList
-                data={this.state.userList}
-                renderItem={this._renderItem}
-                keyExtractor={item => item.id}
-              />
-            </View>
-          )}
-        </Content>
-      </Container>
+      <SafeAreaView>
+        {this.state.refreshing === true ? (
+          <ActivityIndicator
+            size="large"
+            color="#05A0E4"
+            style={{marginTop: 150}}
+          />
+        ) : (
+          <FlatList
+            data={this.state.userList}
+            renderItem={this.renderItem}
+            keyExtractor={(item, index) => index.toString()}
+          />
+        )}
+      </SafeAreaView>
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#DCDCDC',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    padding: 10,
+  },
+  pic: {
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 280,
+  },
+  nameTxt: {
+    marginLeft: 15,
+    fontWeight: '600',
+    color: '#222',
+    fontSize: 18,
+    width: 170,
+  },
+  status: {
+    fontWeight: '200',
+    color: '#ccc',
+    fontSize: 13,
+  },
+  msgContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 15,
+  },
+  email: {
+    fontWeight: '400',
+    color: '#008B8B',
+    fontSize: 12,
+    marginLeft: 15,
+  },
+});

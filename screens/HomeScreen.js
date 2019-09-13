@@ -7,6 +7,7 @@ import {
   Platform,
   PermissionsAndroid,
   Dimensions,
+  AsyncStorage,
 } from 'react-native';
 import MapView, {Marker} from 'react-native-maps';
 import Geolocation from 'react-native-geolocation-service';
@@ -29,17 +30,21 @@ export default class HomeScreen extends Component {
     latitude: 0,
     longitude: 0,
     userList: [],
+    uid: null,
   };
 
   componentDidMount = async () => {
     await this.getUser();
     await this.getLocation();
+    // const uid = await AsyncStorage.getItem('userid');
   };
 
   getUser = async () => {
+    const uid = await AsyncStorage.getItem('userid');
+    this.setState({uid: uid});
     Database.ref('/user').on('child_added', result => {
       let data = result.val();
-      if (data !== null) {
+      if (data !== null && data.id != uid) {
         // console.log(data);
         // let users = Object.values(data);
         // console.log(users);
@@ -123,7 +128,7 @@ export default class HomeScreen extends Component {
   };
 
   render() {
-    console.warn(this.state.userList);
+    // console.warn(this.state.userList);
     return (
       <View style={[styles.container, {justifyContent: 'flex-start'}]}>
         <MapView
@@ -146,12 +151,14 @@ export default class HomeScreen extends Component {
             return (
               <Marker
                 key={item.id}
+                title={item.name}
+                description={item.status}
                 draggable
                 coordinate={{
                   latitude: item.latitude || 0,
                   longitude: item.longitude || 0,
                 }}
-                onPress={() => {
+                onCalloutPress={() => {
                   this.props.navigation.navigate('Profile', {
                     name: item.name,
                     email: item.email,

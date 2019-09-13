@@ -18,6 +18,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import FriendListScreen from './screens/FriendListScreen';
+import FriendProfileScreen from './screens/FriendProfileScreen';
 
 const AppStack = createStackNavigator(
   {
@@ -25,6 +26,7 @@ const AppStack = createStackNavigator(
     Chat: ChatScreen,
     Profile: ProfileScreen,
     FriendList: FriendListScreen,
+    FriendProfile: FriendProfileScreen,
   },
   {initialRouteName: 'Home'},
 );

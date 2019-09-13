@@ -117,24 +117,27 @@ export default class LoginScreen extends Component {
           if (data !== null) {
             let user = Object.values(data);
             console.warn(user);
-            AsyncStorage.setItem('user', user[0].email);
-            AsyncStorage.setItem('user', user[0].name);
-            AsyncStorage.setItem('user', user[0].photo);
+            AsyncStorage.setItem('user.email', user[0].email);
+            AsyncStorage.setItem('user.name', user[0].name);
+            AsyncStorage.setItem('user.photo', user[0].photo);
           }
         });
-      firebase
-        .auth()
-        .signInWithEmailAndPassword(email, password)
-        .then(response => {
+      Auth.signInWithEmailAndPassword(email, password)
+        .then(async response => {
           console.warn(response);
+          await AsyncStorage.setItem('userid', response.user.uid);
+          await AsyncStorage.setItem('user', response.user);
           Database.ref('/user/' + response.user.uid).update({
             status: 'Online',
             latitude: this.state.latitude,
             longitude: this.state.longitude,
           });
-          AsyncStorage.setItem('userid', response.user.uid);
+          // AsyncStorage.setItem('user', response.user);
           ToastAndroid.show('Login success', ToastAndroid.LONG);
-          setInterval(() => this.props.navigation.navigate('Welcome'), 2000);
+          setInterval(
+            () => this.props.navigation.navigate('AuthLoading'),
+            2000,
+          );
         })
         .catch(error => {
           console.warn(error);

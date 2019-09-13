@@ -15,14 +15,13 @@ import firebase from 'firebase';
 import {Database, Auth} from '../constant/config';
 
 export default class ProfileScreen extends Component {
-  static navigationOptions = {
-    title: "User's Profile",
+  static navigationOptions = ({navigation}) => {
+    return {
+      title: navigation.getParam('item').name + "'s Profile",
+    };
   };
   state = {
-    errorMessage: null,
-    loading: false,
-    updatesEnabled: false,
-    location: {},
+    person: this.props.navigation.getParam('item'),
   };
 
   componentDidMount = async () => {
@@ -33,22 +32,6 @@ export default class ProfileScreen extends Component {
     this.setState({userId, userName, userAvatar, userEmail});
   };
 
-  handleLogout = async () => {
-    const userId = await AsyncStorage.getItem('userid');
-
-    Auth.signOut()
-      .then(async () => {
-        Database.ref('/user/' + userId).update({
-          status: 'Offline',
-        });
-        await AsyncStorage.clear();
-        ToastAndroid.show('Logout success', ToastAndroid.LONG);
-        setInterval(() => this.props.navigation.navigate('AuthLoading'), 2000);
-      })
-      .catch(error => this.setState({errorMessage: error.message}));
-    // Alert.alert('Error Message', this.state.errorMessage);
-  };
-
   render() {
     return (
       <View style={styles.container}>
@@ -57,11 +40,12 @@ export default class ProfileScreen extends Component {
             <Image
               style={styles.avatarImg}
               source={{
-                uri: this.state.userAvatar,
+                uri: this.state.person.photo,
               }}
             />
-            <Text style={styles.name}>{this.state.userName}</Text>
-            <Text style={styles.email}>{this.state.userEmail}</Text>
+            <Text style={styles.name}>{this.state.person.name}</Text>
+            <Text style={styles.email}>{this.state.person.status}</Text>
+            <Text style={styles.email}>{this.state.person.email}</Text>
             <Text style={styles.description}>
               Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean
               commodo ligula eget dolor. Aenean massa. Cum sociis natoque
@@ -73,8 +57,14 @@ export default class ProfileScreen extends Component {
           <View style={styles.logoutContainer}>
             <TouchableOpacity
               style={styles.logoutButton}
-              onPress={this.handleLogout}>
-              <Text style={styles.logoutButtonText}>Logout</Text>
+              onPress={() =>
+                this.props.navigation.navigate('Chat', {
+                  item: this.state.person,
+                })
+              }>
+              <Text style={styles.logoutButtonText}>
+                Chat with {this.state.person.name}
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

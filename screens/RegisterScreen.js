@@ -7,6 +7,7 @@ import {
   PermissionsAndroid,
   Platform,
   ToastAndroid,
+  AsyncStorage,
   TouchableOpacity,
 } from 'react-native';
 // import firebase from 'firebase';
