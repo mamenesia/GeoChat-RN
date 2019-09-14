@@ -7,6 +7,7 @@ import {
   Platform,
   PermissionsAndroid,
   Dimensions,
+  TouchableOpacity,
   AsyncStorage,
 } from 'react-native';
 import MapView, {Marker} from 'react-native-maps';
@@ -132,7 +133,7 @@ export default class HomeScreen extends Component {
     return (
       <View style={[styles.container, {justifyContent: 'flex-start'}]}>
         <MapView
-          style={{width: '100%', height: '90%'}}
+          style={{width: '100%', height: '95%'}}
           showsMyLocationButton={true}
           showsIndoorLevelPicker={true}
           showsUserLocation={true}
@@ -159,7 +160,7 @@ export default class HomeScreen extends Component {
                   longitude: item.longitude || 0,
                 }}
                 onCalloutPress={() => {
-                  this.props.navigation.navigate('Profile', {
+                  this.props.navigation.navigate('FriendProfile', {
                     name: item.name,
                     email: item.email,
                     status: item.status,
@@ -178,13 +179,27 @@ export default class HomeScreen extends Component {
             );
           })}
         </MapView>
-        <Text onPress={() => this.getLocation()}>Current Location</Text>
-        <Text onPress={() => this.props.navigation.navigate('FriendList')}>
-          FriendList
-        </Text>
-        <Text onPress={() => this.props.navigation.navigate('Profile')}>
-          Profile
-        </Text>
+        <View style={styles.menuBottom}>
+          <TouchableOpacity>
+            <Text
+              style={styles.buttonText}
+              onPress={() => this.props.navigation.navigate('FriendList')}>
+              FriendList
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles.buttonText} onPress={() => this.getLocation()}>
+              Current Location
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text
+              style={styles.buttonText}
+              onPress={() => this.props.navigation.navigate('Profile')}>
+              Profile
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }

@@ -125,19 +125,16 @@ export default class LoginScreen extends Component {
       Auth.signInWithEmailAndPassword(email, password)
         .then(async response => {
           console.warn(response);
-          await AsyncStorage.setItem('userid', response.user.uid);
-          await AsyncStorage.setItem('user', response.user);
           Database.ref('/user/' + response.user.uid).update({
             status: 'Online',
             latitude: this.state.latitude,
             longitude: this.state.longitude,
           });
           // AsyncStorage.setItem('user', response.user);
+          await AsyncStorage.setItem('userid', response.user.uid);
+          await AsyncStorage.setItem('user', response.user);
           ToastAndroid.show('Login success', ToastAndroid.LONG);
-          setInterval(
-            () => this.props.navigation.navigate('AuthLoading'),
-            2000,
-          );
+          setInterval(() => this.props.navigation.navigate('Home'), 2000);
         })
         .catch(error => {
           console.warn(error);
