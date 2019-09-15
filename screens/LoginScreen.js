@@ -134,7 +134,7 @@ export default class LoginScreen extends Component {
           await AsyncStorage.setItem('userid', response.user.uid);
           await AsyncStorage.setItem('user', response.user);
           ToastAndroid.show('Login success', ToastAndroid.LONG);
-          setInterval(() => this.props.navigation.navigate('Home'), 2000);
+          setInterval(() => this.props.navigation.navigate('App'), 2000);
         })
         .catch(error => {
           console.warn(error);

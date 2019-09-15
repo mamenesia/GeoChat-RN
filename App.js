@@ -20,24 +20,18 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import FriendListScreen from './screens/FriendListScreen';
 import FriendProfileScreen from './screens/FriendProfileScreen';
 
-const AppStack = createStackNavigator(
-  {
-    Home: HomeScreen,
-    Chat: ChatScreen,
-    Profile: ProfileScreen,
-    FriendList: FriendListScreen,
-    FriendProfile: FriendProfileScreen,
-  },
-  {initialRouteName: 'Home'},
-);
-const AuthStack = createStackNavigator(
-  {
-    Welcome: WelcomeScreen,
-    Login: LoginScreen,
-    Register: RegisterScreen,
-  },
-  {initialRouteName: 'Welcome'},
-);
+const AppStack = createStackNavigator({
+  Home: HomeScreen,
+  Chat: ChatScreen,
+  Profile: ProfileScreen,
+  FriendList: FriendListScreen,
+  FriendProfile: FriendProfileScreen,
+});
+const AuthStack = createStackNavigator({
+  Welcome: WelcomeScreen,
+  Login: LoginScreen,
+  Register: RegisterScreen,
+});
 
 const AppContainer = createAppContainer(
   createSwitchNavigator(

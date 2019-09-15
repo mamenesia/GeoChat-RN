@@ -161,11 +161,7 @@ export default class HomeScreen extends Component {
                 }}
                 onCalloutPress={() => {
                   this.props.navigation.navigate('FriendProfile', {
-                    name: item.name,
-                    email: item.email,
-                    status: item.status,
-                    photo: item.photo,
-                    id: item.id,
+                    item,
                   });
                 }}>
                 <View>

@@ -43,7 +43,7 @@ export default class ProfileScreen extends Component {
         });
         await AsyncStorage.clear();
         ToastAndroid.show('Logout success', ToastAndroid.LONG);
-        setInterval(() => this.props.navigation.navigate('Login'), 2000);
+        setInterval(() => this.props.navigation.navigate('Auth'), 2000);
       })
       .catch(error => this.setState({errorMessage: error.message}));
     // Alert.alert('Error Message', this.state.errorMessage);
